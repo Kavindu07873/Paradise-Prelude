@@ -16,7 +16,7 @@ const Contact = () => {
       transition={{ duration: 0.7 }}
     >
       <motion.h2
-        className="text-4xl font-serif font-bold text-center mb-8"
+        className="text-4xl font-serif font-bold text-center mb-8 text-[#CBA135]"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
@@ -25,12 +25,12 @@ const Contact = () => {
       </motion.h2>
 
       <motion.div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow p-8 text-center"
+        className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-8 text-center border border-[#CBA135]/20"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.7 }}
       >
-        <p className="text-lg text-gray-700 dark:text-gray-200 mb-6">
+        <p className="text-lg text-gray-200 mb-6">
           We handle all bookings and inquiries on WhatsApp.
         </p>
         <a

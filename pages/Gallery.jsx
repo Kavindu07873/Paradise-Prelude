@@ -1,22 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const images = [
-  'https://unsplash.it/600/400?image=1050',
-  'https://unsplash.it/600/400?image=1043',
-  'https://unsplash.it/600/400?image=1039',
-  'https://unsplash.it/600/400?image=1027',
-  'https://unsplash.it/600/400?image=1015',
-  'https://unsplash.it/600/400?image=1003',
-  'https://unsplash.it/600/400?image=998',
-  'https://unsplash.it/600/400?image=990',
-  'https://unsplash.it/600/400?image=990',
-  'https://unsplash.it/600/400?image=990',
-  'https://unsplash.it/600/400?image=990',
-  'https://unsplash.it/600/400?image=990',
-  'https://unsplash.it/600/400?image=990',
-
-];
+import { galleryImages } from '../config/images';
 
 const Gallery = () => {
   const [selected, setSelected] = useState(null);
@@ -25,7 +9,7 @@ const Gallery = () => {
     <motion.section className="max-w-6xl mx-auto px-4 py-16" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7 }}>
       <h2 className="text-4xl font-serif font-bold text-center mb-10">Gallery</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {images.map((src, idx) => (
+        {galleryImages.map((src, idx) => (
           <motion.button
             key={src}
             className="focus:outline-none group relative"
@@ -59,7 +43,7 @@ const Gallery = () => {
             transition={{ duration: 0.3 }}
           >
             <motion.img
-              src={images[selected]}
+              src={galleryImages[selected]}
               alt={`Paradise Prelude ${selected + 1}`}
               className="max-w-full max-h-[80vh] rounded-lg shadow-2xl border-4 border-white"
               initial={{ scale: 0.8, opacity: 0 }}

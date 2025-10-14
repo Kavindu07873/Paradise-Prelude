@@ -7,60 +7,24 @@ import { Navigation, Pagination, A11y } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-
-const heroBg = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80';
-
-const galleryImages = [
-  'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80',
-];
-
-const reviews = [
-  {
-    name: 'Emily R.',
-    text: 'A truly magical stay! The villa is stunning, the staff attentive, and the location perfect for exploring the southern coast.',
-    rating: 5,
-  },
-  {
-    name: 'Liam S.',
-    text: 'We loved the infinity pool and the ocean views. Every detail was perfect. Highly recommended!',
-    rating: 5,
-  },
-  {
-    name: 'Sofia D.',
-    text: 'The most relaxing holiday we have ever had. The garden and spa are a dream. Will return!',
-    rating: 5,
-  },
-  {
-    name: 'Arjun K.',
-    text: 'Great location, clean and safe with some Nice natural attractions. Just 10 min from the beach, very easy to find family and better based on the amenities.',
-    rating: 4,
-  },
-  {
-    name: 'Chai, France',
-    text: 'Lovely and quiet. Well located. Happy return. Very unique. Perfectly clean. All green property, everything in one place.',
-    rating: 5,
-  },
-  {
-    name: 'Deepu, Singapore',
-    text: 'Amazing resort. Beautiful, serene, and lovely hospitality. The views are out of a novel, and the swimming pool. You feel isolated from the ocean but simultaneously safe. Will return to visit again.',
-    rating: 5,
-  },
-];
+import { heroImages, galleryImages } from '../config/images';
+import { getReviewsPreview } from '../config/reviews';
+import { getFeaturedAmenities, amenitiesAnimationVariants, getAmenitiesWithIcons } from '../config/amenities';
+import AmenityCard from '../components/AmenityCard';
 
 const WHATSAPP_NUMBER = '1234567890';
 const DEFAULT_MESSAGE = encodeURIComponent("Hello Paradise Prelude! I'd like to inquire about availability.");
 
-const Home = () => (
+const Home = () => {
+  const reviews = getReviewsPreview(6); // Get first 6 reviews for home page
+  const featuredAmenities = getAmenitiesWithIcons(getFeaturedAmenities(6)); // Get 6 featured amenities with icons
+
+  return (
   <>
     {/* Hero Section */}
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       <motion.img
-        src={heroBg}
+        src={heroImages.main}
         alt="Paradise Prelude Villa"
         className="absolute inset-0 w-full h-full object-cover object-center -z-10 scale-110"
         initial={{ scale: 1.1, opacity: 0 }}
@@ -143,6 +107,49 @@ const Home = () => (
         </Link>
       </div>
     </section>
+    
+    {/* Featured Amenities */}
+    <section className="max-w-6xl mx-auto px-4 py-12">
+      <motion.h2 
+        className="text-3xl font-serif font-bold text-white mb-6 text-center"
+        initial={{ opacity: 0, y: -20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+        viewport={{ once: true }}
+      >
+        Featured Amenities
+      </motion.h2>
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+        variants={amenitiesAnimationVariants.container}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true }}
+      >
+        {featuredAmenities.map((amenity) => (
+          <motion.div
+            key={amenity.id}
+            variants={amenitiesAnimationVariants.item}
+            whileHover={{ scale: 1.04 }}
+          >
+            <AmenityCard
+              iconComponent={amenity.iconComponent}
+              title={amenity.title}
+              desc={amenity.description}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+      <div className="flex justify-center mt-8">
+        <Link 
+          to="/amenities" 
+          className="px-8 py-3 bg-gradient-to-r from-[#CBA135] to-[#4ECDC4] hover:from-[#4ECDC4] hover:to-[#CBA135] text-white text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105"
+        >
+          View All Amenities
+        </Link>
+      </div>
+    </section>
+    
     {/* Guest Reviews Slider */}
     <section className="max-w-5xl mx-auto px-4 py-12">
       <h2 className="text-3xl font-serif font-bold text-white mb-6">Guest Reviews</h2>
@@ -195,6 +202,7 @@ const Home = () => (
       <FaWhatsapp className="text-2xl" />
     </a>
   </>
-);
+  );
+};
 
 export default Home; 

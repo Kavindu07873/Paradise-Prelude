@@ -7,6 +7,15 @@
 body {
   font-family: 'Inter', 'Lato', sans-serif;
   @apply bg-gray-950 text-gray-100;
+  min-height: 100vh;
+}
+
+html {
+  @apply bg-gray-950;
+}
+
+#root {
+  @apply bg-gray-950 min-h-screen;
 }
 
 h1, h2, h3, h4, h5, h6 {

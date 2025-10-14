@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const Location = () => (
-  <motion.section className="max-w-4xl mx-auto px-4 py-16">
+  <motion.section className="max-w-4xl mx-auto px-4 py-16" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7 }}>
     <motion.h2 className="text-4xl font-serif font-bold mb-8 text-center text-[#CBA135]" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
       Convenient Location
     </motion.h2>
