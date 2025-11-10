@@ -1,13 +1,15 @@
 // Engagement tracking utilities for Paradise Prelude
-// Tracks live views, likes, and user engagement
+// Now uses Firebase Firestore for persistent storage across devices
 
-const STORAGE_KEYS = {
-  VIEWS: 'paradise_prelude_total_views',
-  LIKES: 'paradise_prelude_total_likes',
-  USER_LIKED: 'paradise_prelude_user_liked',
-  SESSION_ID: 'paradise_prelude_session_id',
-  LAST_VIEW_TIME: 'paradise_prelude_last_view_time',
-};
+import {
+  getEngagementData,
+  incrementViews,
+  incrementLikes,
+  decrementLikes,
+  hasUserLiked as checkUserLiked,
+  setUserLiked,
+  trackViewSession,
+} from '../services/firebaseService';
 
 // Session timeout (30 minutes of inactivity)
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -26,23 +28,23 @@ const generateSessionId = () => {
  */
 const getSessionId = () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.SESSION_ID);
-    const lastViewTime = localStorage.getItem(STORAGE_KEYS.LAST_VIEW_TIME);
+    const stored = localStorage.getItem('paradise_prelude_session_id');
+    const lastViewTime = localStorage.getItem('paradise_prelude_last_view_time');
     
     // Check if session expired
     if (stored && lastViewTime) {
       const timeSinceLastView = Date.now() - parseInt(lastViewTime);
       if (timeSinceLastView < SESSION_TIMEOUT) {
         // Update last view time
-        localStorage.setItem(STORAGE_KEYS.LAST_VIEW_TIME, Date.now().toString());
+        localStorage.setItem('paradise_prelude_last_view_time', Date.now().toString());
         return stored;
       }
     }
     
     // Create new session
     const newSessionId = generateSessionId();
-    localStorage.setItem(STORAGE_KEYS.SESSION_ID, newSessionId);
-    localStorage.setItem(STORAGE_KEYS.LAST_VIEW_TIME, Date.now().toString());
+    localStorage.setItem('paradise_prelude_session_id', newSessionId);
+    localStorage.setItem('paradise_prelude_last_view_time', Date.now().toString());
     return newSessionId;
   } catch (error) {
     console.error('Error getting session ID:', error);
@@ -52,33 +54,24 @@ const getSessionId = () => {
 
 /**
  * Track a new view
- * @returns {number} - Total view count
+ * @returns {Promise<number>} - Total view count
  */
-export const trackView = () => {
+export const trackView = async () => {
   try {
     const sessionId = getSessionId();
-    const storedViews = localStorage.getItem(STORAGE_KEYS.VIEWS);
-    let totalViews = storedViews ? parseInt(storedViews) : 0;
     
-    // Check if this is a new session (not just a page refresh within same session)
-    const lastViewTime = localStorage.getItem(STORAGE_KEYS.LAST_VIEW_TIME);
-    if (lastViewTime) {
-      const timeSinceLastView = Date.now() - parseInt(lastViewTime);
-      // Only count as new view if more than 5 seconds have passed (to avoid rapid refreshes)
-      if (timeSinceLastView > 5000) {
-        totalViews += 1;
-        localStorage.setItem(STORAGE_KEYS.VIEWS, totalViews.toString());
-      }
+    // Check if this session should be counted
+    const shouldCount = await trackViewSession(sessionId);
+    
+    if (shouldCount) {
+      // Increment view count in Firebase
+      const totalViews = await incrementViews();
+      return totalViews;
     } else {
-      // First view ever
-      totalViews = 1;
-      localStorage.setItem(STORAGE_KEYS.VIEWS, totalViews.toString());
+      // Don't count, but return current count
+      const engagement = await getEngagementData();
+      return engagement.totalViews || 0;
     }
-    
-    // Update last view time
-    localStorage.setItem(STORAGE_KEYS.LAST_VIEW_TIME, Date.now().toString());
-    
-    return totalViews;
   } catch (error) {
     console.error('Error tracking view:', error);
     return 0;
@@ -87,12 +80,12 @@ export const trackView = () => {
 
 /**
  * Get total view count
- * @returns {number} - Total view count
+ * @returns {Promise<number>} - Total view count
  */
-export const getTotalViews = () => {
+export const getTotalViews = async () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.VIEWS);
-    return stored ? parseInt(stored) : 0;
+    const engagement = await getEngagementData();
+    return engagement.totalViews || 0;
   } catch (error) {
     console.error('Error getting total views:', error);
     return 0;
@@ -104,75 +97,61 @@ export const getTotalViews = () => {
  * @returns {boolean} - True if user has liked
  */
 export const hasUserLiked = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.USER_LIKED);
-    return stored === 'true';
-  } catch (error) {
-    console.error('Error checking if user liked:', error);
-    return false;
-  }
+  return checkUserLiked();
 };
 
 /**
  * Add a like
- * @returns {number} - Total like count
+ * @returns {Promise<number>} - Total like count
  */
-export const addLike = () => {
+export const addLike = async () => {
   try {
     // Check if user already liked
     if (hasUserLiked()) {
-      return getTotalLikes();
+      return await getTotalLikes();
     }
     
-    const storedLikes = localStorage.getItem(STORAGE_KEYS.LIKES);
-    let totalLikes = storedLikes ? parseInt(storedLikes) : 0;
-    totalLikes += 1;
-    
-    localStorage.setItem(STORAGE_KEYS.LIKES, totalLikes.toString());
-    localStorage.setItem(STORAGE_KEYS.USER_LIKED, 'true');
+    // Increment like count in Firebase
+    const totalLikes = await incrementLikes();
+    setUserLiked(true);
     
     return totalLikes;
   } catch (error) {
     console.error('Error adding like:', error);
-    return getTotalLikes();
+    return await getTotalLikes();
   }
 };
 
 /**
  * Remove a like (unlike)
- * @returns {number} - Total like count
+ * @returns {Promise<number>} - Total like count
  */
-export const removeLike = () => {
+export const removeLike = async () => {
   try {
     // Check if user has liked
     if (!hasUserLiked()) {
-      return getTotalLikes();
+      return await getTotalLikes();
     }
     
-    const storedLikes = localStorage.getItem(STORAGE_KEYS.LIKES);
-    let totalLikes = storedLikes ? parseInt(storedLikes) : 0;
-    
-    if (totalLikes > 0) {
-      totalLikes -= 1;
-      localStorage.setItem(STORAGE_KEYS.LIKES, totalLikes.toString());
-      localStorage.setItem(STORAGE_KEYS.USER_LIKED, 'false');
-    }
+    // Decrement like count in Firebase
+    const totalLikes = await decrementLikes();
+    setUserLiked(false);
     
     return totalLikes;
   } catch (error) {
     console.error('Error removing like:', error);
-    return getTotalLikes();
+    return await getTotalLikes();
   }
 };
 
 /**
  * Get total like count
- * @returns {number} - Total like count
+ * @returns {Promise<number>} - Total like count
  */
-export const getTotalLikes = () => {
+export const getTotalLikes = async () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.LIKES);
-    return stored ? parseInt(stored) : 0;
+    const engagement = await getEngagementData();
+    return engagement.totalLikes || 0;
   } catch (error) {
     console.error('Error getting total likes:', error);
     return 0;
@@ -181,11 +160,11 @@ export const getTotalLikes = () => {
 
 /**
  * Toggle like (like/unlike)
- * @returns {Object} - Object with like count and liked status
+ * @returns {Promise<Object>} - Object with like count and liked status
  */
-export const toggleLike = () => {
+export const toggleLike = async () => {
   const hasLiked = hasUserLiked();
-  const totalLikes = hasLiked ? removeLike() : addLike();
+  const totalLikes = hasLiked ? await removeLike() : await addLike();
   
   return {
     totalLikes,
@@ -195,15 +174,26 @@ export const toggleLike = () => {
 
 /**
  * Get engagement statistics
- * @returns {Object} - Engagement statistics
+ * @returns {Promise<Object>} - Engagement statistics
  */
-export const getEngagementStats = () => {
-  return {
-    totalViews: getTotalViews(),
-    totalLikes: getTotalLikes(),
-    hasUserLiked: hasUserLiked(),
-    sessionId: getSessionId(),
-  };
+export const getEngagementStats = async () => {
+  try {
+    const engagement = await getEngagementData();
+    return {
+      totalViews: engagement.totalViews || 0,
+      totalLikes: engagement.totalLikes || 0,
+      hasUserLiked: hasUserLiked(),
+      sessionId: getSessionId(),
+    };
+  } catch (error) {
+    console.error('Error getting engagement stats:', error);
+    return {
+      totalViews: 0,
+      totalLikes: 0,
+      hasUserLiked: false,
+      sessionId: getSessionId(),
+    };
+  }
 };
 
 /**
@@ -218,13 +208,13 @@ export const formatNumber = (num) => {
 /**
  * Reset all engagement data (admin function)
  */
-export const resetEngagementData = () => {
+export const resetEngagementData = async () => {
   try {
-    localStorage.removeItem(STORAGE_KEYS.VIEWS);
-    localStorage.removeItem(STORAGE_KEYS.LIKES);
-    localStorage.removeItem(STORAGE_KEYS.USER_LIKED);
-    localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
-    localStorage.removeItem(STORAGE_KEYS.LAST_VIEW_TIME);
+    // Note: This would need to be implemented in Firebase service
+    // For now, just clear local storage
+    localStorage.removeItem('paradise_prelude_user_liked');
+    localStorage.removeItem('paradise_prelude_session_id');
+    localStorage.removeItem('paradise_prelude_last_view_time');
     return true;
   } catch (error) {
     console.error('Error resetting engagement data:', error);
@@ -245,4 +235,3 @@ export default {
   formatNumber,
   resetEngagementData,
 };
-

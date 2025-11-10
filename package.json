@@ -10,6 +10,7 @@
     "postcss": "postcss src/index.css -o dist/index.css"
   },
   "dependencies": {
+    "firebase": "^12.5.0",
     "framer-motion": "^12.23.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

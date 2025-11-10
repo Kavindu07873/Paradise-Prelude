@@ -38,6 +38,8 @@ const ReviewForm = ({ onReviewAdded }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     setIsSubmitting(true);
     setSubmitMessage('');
 
@@ -51,8 +53,11 @@ const ReviewForm = ({ onReviewAdded }) => {
         throw new Error('Review must be at least 10 characters long');
       }
 
-      // Add review
-      const newReview = addReview(formData);
+      // Add review to Firebase
+      const newReview = await addReview(formData);
+      
+      // Show success message
+      setSubmitMessage('Thank you for your review! It has been saved to Firebase successfully.');
       
       // Reset form
       setFormData({
@@ -61,21 +66,16 @@ const ReviewForm = ({ onReviewAdded }) => {
         rating: 0,
       });
       
-      setSubmitMessage('Thank you for your review! It has been submitted successfully.');
-      
-      // Notify parent component
-      if (onReviewAdded) {
-        onReviewAdded(newReview);
-      }
-
-      // Clear success message after 3 seconds
+      // Notify parent component after a short delay for smooth UX
       setTimeout(() => {
-        setSubmitMessage('');
-      }, 3000);
+        if (onReviewAdded) {
+          onReviewAdded(newReview);
+        }
+      }, 1000);
 
     } catch (error) {
-      setSubmitMessage(error.message || 'Failed to submit review. Please try again.');
-    } finally {
+      console.error('Error submitting review:', error);
+      setSubmitMessage(error.message || 'Failed to submit review. Please check your connection and try again.');
       setIsSubmitting(false);
     }
   };
@@ -95,6 +95,7 @@ const ReviewForm = ({ onReviewAdded }) => {
           onClick={() => handleRatingClick(starValue)}
           onMouseEnter={() => handleRatingHover(starValue)}
           onMouseLeave={handleRatingLeave}
+          disabled={isSubmitting}
         >
           <FaStar />
         </button>
@@ -107,13 +108,13 @@ const ReviewForm = ({ onReviewAdded }) => {
       className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-2xl mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7 }}
+      transition={{ duration: 0.3 }}
     >
       <h3 className="text-2xl font-serif font-bold text-center mb-6 text-[#CBA135]">
         Share Your Experience
       </h3>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         {/* Name Field */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-200 mb-2">
@@ -170,6 +171,7 @@ const ReviewForm = ({ onReviewAdded }) => {
             required
             disabled={isSubmitting}
             minLength={10}
+            maxLength={500}
           />
           <p className="text-sm text-gray-400 mt-1">
             {formData.text.length}/500 characters (minimum 10)
@@ -183,7 +185,14 @@ const ReviewForm = ({ onReviewAdded }) => {
             disabled={isSubmitting || !formData.name.trim() || !formData.text.trim() || formData.rating === 0}
             className="px-8 py-3 bg-gradient-to-r from-[#CBA135] to-[#4ECDC4] hover:from-[#4ECDC4] hover:to-[#CBA135] text-white text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gold-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Submitting to Firebase...
+              </span>
+            ) : (
+              'Submit Review'
+            )}
           </button>
         </div>
 
@@ -191,7 +200,7 @@ const ReviewForm = ({ onReviewAdded }) => {
         {submitMessage && (
           <motion.div
             className={`text-center p-3 rounded-lg ${
-              submitMessage.includes('Thank you') 
+              submitMessage.includes('Thank you') || submitMessage.includes('successfully')
                 ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
                 : 'bg-red-500/20 text-red-300 border border-red-500/30'
             }`}

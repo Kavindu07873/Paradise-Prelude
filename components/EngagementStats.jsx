@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHeart, FaEye, FaThumbsUp } from 'react-icons/fa';
+import { FaHeart, FaEye } from 'react-icons/fa';
 import { 
   trackView, 
   getTotalViews, 
@@ -15,33 +15,63 @@ const EngagementStats = () => {
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Track view on mount
-    const newViews = trackView();
-    setViews(newViews);
-    setLikes(getTotalLikes());
-    setIsLiked(hasUserLiked());
+    // Load initial data
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        // Track view on mount
+        const newViews = await trackView();
+        setViews(newViews);
+        
+        const totalLikes = await getTotalLikes();
+        setLikes(totalLikes);
+        
+        setIsLiked(hasUserLiked());
+      } catch (error) {
+        console.error('Error loading engagement data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Update views periodically (every 30 seconds)
-    const interval = setInterval(() => {
-      setViews(getTotalViews());
-      setLikes(getTotalLikes());
+    loadData();
+
+    // Update views and likes periodically (every 30 seconds)
+    const interval = setInterval(async () => {
+      try {
+        const currentViews = await getTotalViews();
+        const currentLikes = await getTotalLikes();
+        setViews(currentViews);
+        setLikes(currentLikes);
+      } catch (error) {
+        console.error('Error updating engagement data:', error);
+      }
     }, 30000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const handleLike = () => {
+  const handleLike = async () => {
     setIsAnimating(true);
-    const result = toggleLike();
-    setLikes(result.totalLikes);
-    setIsLiked(result.hasLiked);
-    
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 600);
+    try {
+      const result = await toggleLike();
+      setLikes(result.totalLikes);
+      setIsLiked(result.hasLiked);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    } finally {
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 600);
+    }
   };
+
+  if (loading) {
+    return null; // Don't show anything while loading
+  }
 
   return (
     <motion.div
@@ -125,4 +155,3 @@ const EngagementStats = () => {
 };
 
 export default EngagementStats;
-

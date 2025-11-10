@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
@@ -17,8 +17,23 @@ const WHATSAPP_NUMBER = '1234567890';
 const DEFAULT_MESSAGE = encodeURIComponent("Hello Paradise Prelude! I'd like to inquire about availability.");
 
 const Home = () => {
-  const reviews = getReviewsPreview(6); // Get first 6 reviews for home page
+  const [reviews, setReviews] = useState([]);
   const featuredAmenities = getAmenitiesWithIcons(getFeaturedAmenities(6)); // Get 6 featured amenities with icons
+
+  useEffect(() => {
+    // Load reviews asynchronously
+    const loadReviews = async () => {
+      try {
+        const previewReviews = await getReviewsPreview(6);
+        setReviews(previewReviews);
+      } catch (error) {
+        console.error('Error loading reviews:', error);
+        setReviews([]);
+      }
+    };
+
+    loadReviews();
+  }, []);
 
   return (
   <>
@@ -155,46 +170,48 @@ const Home = () => {
     </section>
     
     {/* Guest Reviews Slider */}
-    <section className="max-w-5xl mx-auto px-4 py-12">
-      <h2 className="text-3xl font-serif font-bold text-white mb-6">Guest Reviews</h2>
-      <Swiper
-        modules={[Navigation, Pagination, A11y]}
-        spaceBetween={20}
-        slidesPerView={1}
-        navigation
-        pagination={{ clickable: true }}
-        breakpoints={{
-          640: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 },
-        }}
-        className="rounded-2xl"
-      >
-        {reviews.map((review, idx) => (
-          <SwiperSlide key={idx}>
-            <motion.div
-              className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-8 text-center h-full flex flex-col justify-between"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true }}
-            >
-              <div className="flex justify-center mb-4">
-                {Array.from({ length: review.rating }).map((_, i) => (
-                  <span key={i} className="text-[#CBA135] text-xl">★</span>
-                ))}
-              </div>
-              <p className="text-lg text-gray-100 font-serif mb-4">“{review.text}”</p>
-              <div className="text-[#4ECDC4] font-semibold">{review.name}</div>
-            </motion.div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
-      <div className="flex justify-center mt-6">
-        <Link to="/reviews" className="px-8 py-3 bg-gradient-to-r from-[#CBA135] to-[#4ECDC4] hover:from-[#4ECDC4] hover:to-[#CBA135] text-white text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105">
-          Read More Reviews
-        </Link>
-      </div>
-    </section>
+    {reviews.length > 0 && (
+      <section className="max-w-5xl mx-auto px-4 py-12">
+        <h2 className="text-3xl font-serif font-bold text-white mb-6">Guest Reviews</h2>
+        <Swiper
+          modules={[Navigation, Pagination, A11y]}
+          spaceBetween={20}
+          slidesPerView={1}
+          navigation
+          pagination={{ clickable: true }}
+          breakpoints={{
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+          }}
+          className="rounded-2xl"
+        >
+          {reviews.map((review, idx) => (
+            <SwiperSlide key={review.id || idx}>
+              <motion.div
+                className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-8 text-center h-full flex flex-col justify-between"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                viewport={{ once: true }}
+              >
+                <div className="flex justify-center mb-4">
+                  {Array.from({ length: review.rating }).map((_, i) => (
+                    <span key={i} className="text-[#CBA135] text-xl">★</span>
+                  ))}
+                </div>
+                <p className="text-lg text-gray-100 font-serif mb-4">"{review.text}"</p>
+                <div className="text-[#4ECDC4] font-semibold">{review.name}</div>
+              </motion.div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+        <div className="flex justify-center mt-6">
+          <Link to="/reviews" className="px-8 py-3 bg-gradient-to-r from-[#CBA135] to-[#4ECDC4] hover:from-[#4ECDC4] hover:to-[#CBA135] text-white text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105">
+            Read More Reviews
+          </Link>
+        </div>
+      </section>
+    )}
     {/* Floating WhatsApp Button */}
     <a
       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${DEFAULT_MESSAGE}`}
@@ -209,4 +226,4 @@ const Home = () => {
   );
 };
 
-export default Home; 
+export default Home;

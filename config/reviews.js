@@ -1,7 +1,9 @@
 // Centralized review management for Paradise Prelude
-// This file manages all reviews used across the application
+// Now uses Firebase Firestore for persistent storage across devices
 
-// Default reviews (these will be shown initially)
+import { getAllReviews as getFirestoreReviews, addReview as addFirestoreReview, deleteReview as deleteFirestoreReview, updateReview as updateFirestoreReview } from '../services/firebaseService';
+
+// Default reviews (these will be shown initially if no reviews in Firestore)
 const defaultReviews = [
   {
     id: 1,
@@ -53,114 +55,171 @@ const defaultReviews = [
   },
 ];
 
-// Storage key for localStorage
-const STORAGE_KEY = 'paradise_prelude_reviews';
+// Cache for reviews to avoid multiple Firebase calls
+let reviewsCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 30000; // 30 seconds
 
-// Get all reviews from localStorage or return default reviews
-export const getAllReviews = () => {
+/**
+ * Get all reviews from Firestore or cache
+ * @returns {Promise<Array>} - Array of reviews
+ */
+export const getAllReviews = async () => {
   try {
-    const storedReviews = localStorage.getItem(STORAGE_KEY);
-    if (storedReviews) {
-      return JSON.parse(storedReviews);
+    // Check cache first
+    if (reviewsCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
+      return reviewsCache;
     }
+    
+    // Get reviews from Firestore
+    const firestoreReviews = await getFirestoreReviews();
+    
+    // If no reviews in Firestore, return default reviews
+    if (firestoreReviews.length === 0) {
+      reviewsCache = defaultReviews;
+      cacheTimestamp = Date.now();
+      return defaultReviews;
+    }
+    
+    // Cache the reviews
+    reviewsCache = firestoreReviews;
+    cacheTimestamp = Date.now();
+    
+    return firestoreReviews;
   } catch (error) {
-    console.error('Error loading reviews from localStorage:', error);
+    console.error('Error loading reviews from Firestore:', error);
+    // Fallback to default reviews on error
+    return defaultReviews;
   }
-  return defaultReviews;
 };
 
-// Save reviews to localStorage
-const saveReviews = (reviews) => {
+/**
+ * Invalidate reviews cache
+ */
+const invalidateCache = () => {
+  reviewsCache = null;
+  cacheTimestamp = null;
+};
+
+/**
+ * Add a new review
+ * @param {Object} reviewData - Review data
+ * @returns {Promise<Object>} - New review object
+ */
+export const addReview = async (reviewData) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
+    // Validate review data
+    if (!reviewData.name || !reviewData.text || !reviewData.rating) {
+      throw new Error('Invalid review data');
+    }
+    
+    if (reviewData.rating < 1 || reviewData.rating > 5) {
+      throw new Error('Rating must be between 1 and 5');
+    }
+    
+    // Add review to Firestore
+    const newReview = await addFirestoreReview(reviewData);
+    
+    // Invalidate cache
+    invalidateCache();
+    
+    return newReview;
   } catch (error) {
-    console.error('Error saving reviews to localStorage:', error);
+    console.error('Error adding review:', error);
+    throw error;
   }
 };
 
-// Add a new review
-export const addReview = (reviewData) => {
-  const reviews = getAllReviews();
-  const newReview = {
-    id: Date.now(), // Simple ID generation
-    name: reviewData.name.trim(),
-    text: reviewData.text.trim(),
-    rating: parseInt(reviewData.rating),
-    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-    verified: false, // New reviews are not verified by default
-  };
-
-  // Validate review data
-  if (!newReview.name || !newReview.text || newReview.rating < 1 || newReview.rating > 5) {
-    throw new Error('Invalid review data');
-  }
-
-  // Add to beginning of array (newest first)
-  const updatedReviews = [newReview, ...reviews];
-  saveReviews(updatedReviews);
-  return newReview;
-};
-
-// Get reviews for preview (first few reviews)
-export const getReviewsPreview = (count = 3) => {
-  const reviews = getAllReviews();
+/**
+ * Get reviews for preview (first few reviews)
+ * @param {number} count - Number of reviews to return
+ * @returns {Promise<Array>} - Array of reviews
+ */
+export const getReviewsPreview = async (count = 3) => {
+  const reviews = await getAllReviews();
   return reviews.slice(0, count);
 };
 
-// Get all reviews for the reviews page
-export const getReviewsForPage = () => {
-  return getAllReviews();
+/**
+ * Get all reviews for the reviews page
+ * @returns {Promise<Array>} - Array of all reviews
+ */
+export const getReviewsForPage = async () => {
+  return await getAllReviews();
 };
 
-// Get reviews by rating
-export const getReviewsByRating = (rating) => {
-  const reviews = getAllReviews();
+/**
+ * Get reviews by rating
+ * @param {number} rating - Rating to filter by
+ * @returns {Promise<Array>} - Array of reviews with specified rating
+ */
+export const getReviewsByRating = async (rating) => {
+  const reviews = await getAllReviews();
   return reviews.filter(review => review.rating === rating);
 };
 
-// Get average rating
-export const getAverageRating = () => {
-  const reviews = getAllReviews();
+/**
+ * Get average rating
+ * @returns {Promise<number>} - Average rating
+ */
+export const getAverageRating = async () => {
+  const reviews = await getAllReviews();
   if (reviews.length === 0) return 0;
   
   const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
   return Math.round((totalRating / reviews.length) * 10) / 10; // Round to 1 decimal place
 };
 
-// Get rating distribution
-export const getRatingDistribution = () => {
-  const reviews = getAllReviews();
+/**
+ * Get rating distribution
+ * @returns {Promise<Object>} - Rating distribution object
+ */
+export const getRatingDistribution = async () => {
+  const reviews = await getAllReviews();
   const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   
   reviews.forEach(review => {
-    distribution[review.rating]++;
+    distribution[review.rating] = (distribution[review.rating] || 0) + 1;
   });
   
   return distribution;
 };
 
-// Delete a review (admin function)
-export const deleteReview = (reviewId) => {
-  const reviews = getAllReviews();
-  const updatedReviews = reviews.filter(review => review.id !== reviewId);
-  saveReviews(updatedReviews);
-  return updatedReviews;
+/**
+ * Delete a review (admin function)
+ * @param {string} reviewId - Review ID to delete
+ * @returns {Promise<boolean>} - Success status
+ */
+export const deleteReview = async (reviewId) => {
+  try {
+    const success = await deleteFirestoreReview(reviewId);
+    if (success) {
+      invalidateCache();
+    }
+    return success;
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    return false;
+  }
 };
 
-// Update a review (admin function)
-export const updateReview = (reviewId, updates) => {
-  const reviews = getAllReviews();
-  const updatedReviews = reviews.map(review => 
-    review.id === reviewId ? { ...review, ...updates } : review
-  );
-  saveReviews(updatedReviews);
-  return updatedReviews;
-};
-
-// Reset to default reviews (admin function)
-export const resetToDefaultReviews = () => {
-  saveReviews(defaultReviews);
-  return defaultReviews;
+/**
+ * Update a review (admin function)
+ * @param {string} reviewId - Review ID to update
+ * @param {Object} updates - Updates to apply
+ * @returns {Promise<boolean>} - Success status
+ */
+export const updateReview = async (reviewId, updates) => {
+  try {
+    const success = await updateFirestoreReview(reviewId, updates);
+    if (success) {
+      invalidateCache();
+    }
+    return success;
+  } catch (error) {
+    console.error('Error updating review:', error);
+    return false;
+  }
 };
 
 // Export default reviews for reference
@@ -177,6 +236,5 @@ export default {
   getRatingDistribution,
   deleteReview,
   updateReview,
-  resetToDefaultReviews,
   defaultReviews,
 };

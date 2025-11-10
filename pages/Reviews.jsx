@@ -10,14 +10,27 @@ const Reviews = () => {
   const [showForm, setShowForm] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [ratingDistribution, setRatingDistribution] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Load reviews on component mount
   useEffect(() => {
-    const loadReviews = () => {
-      const allReviews = getReviewsForPage();
-      setReviews(allReviews);
-      setAverageRating(getAverageRating());
-      setRatingDistribution(getRatingDistribution());
+    const loadReviews = async () => {
+      try {
+        setLoading(true);
+        const allReviews = await getReviewsForPage();
+        setReviews(allReviews);
+        
+        const avgRating = await getAverageRating();
+        setAverageRating(avgRating);
+        
+        const dist = await getRatingDistribution();
+        setRatingDistribution(dist);
+      } catch (error) {
+        console.error('Error loading reviews:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     
     loadReviews();
@@ -26,18 +39,69 @@ const Reviews = () => {
   const next = () => setIdx((idx + 1) % reviews.length);
   const prev = () => setIdx((idx - 1 + reviews.length) % reviews.length);
 
-  const handleReviewAdded = (newReview) => {
-    // Refresh reviews when a new one is added
-    const allReviews = getReviewsForPage();
-    setReviews(allReviews);
-    setAverageRating(getAverageRating());
-    setRatingDistribution(getRatingDistribution());
-    setShowForm(false);
+  const handleReviewAdded = async (newReview) => {
+    // Refresh reviews when a new one is added - with smooth transition
+    try {
+      setRefreshing(true);
+      
+      // Add the new review optimistically to the list immediately
+      setReviews(prevReviews => [newReview, ...prevReviews]);
+      
+      // Then refresh from Firebase to get the complete list
+      const allReviews = await getReviewsForPage();
+      setReviews(allReviews);
+      
+      const avgRating = await getAverageRating();
+      setAverageRating(avgRating);
+      
+      const dist = await getRatingDistribution();
+      setRatingDistribution(dist);
+      
+      // Reset carousel to show the new review
+      setIdx(0);
+      
+      // Close form after a short delay for smooth transition
+      setTimeout(() => {
+        setShowForm(false);
+        setRefreshing(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error refreshing reviews:', error);
+      setRefreshing(false);
+      // On error, reload all reviews
+      try {
+        const allReviews = await getReviewsForPage();
+        setReviews(allReviews);
+      } catch (reloadError) {
+        console.error('Error reloading reviews:', reloadError);
+      }
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-16 min-h-screen flex items-center justify-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="text-white text-xl mb-4">Loading reviews...</div>
+          <div className="w-16 h-16 border-4 border-[#CBA135] border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-16">
-      <motion.h2 className="text-4xl font-serif font-bold text-center mb-8 text-[#CBA135]" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+    <div className="max-w-6xl mx-auto px-4 py-16 min-h-screen">
+      <motion.h2 
+        className="text-4xl font-serif font-bold text-center mb-8 text-[#CBA135]" 
+        initial={{ opacity: 0, y: -20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.7 }}
+      >
         Guest Reviews
       </motion.h2>
 
@@ -50,7 +114,7 @@ const Reviews = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div>
-            <div className="text-3xl font-bold text-[#CBA135] mb-2">{averageRating}</div>
+            <div className="text-3xl font-bold text-[#CBA135] mb-2">{averageRating.toFixed(1)}</div>
             <div className="text-gray-300">Average Rating</div>
             <div className="flex justify-center mt-2">
               {[...Array(5)].map((_, i) => (
@@ -79,8 +143,8 @@ const Reviews = () => {
         <motion.div 
           className="max-w-2xl mx-auto mb-8"
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
+          animate={{ opacity: refreshing ? 0.7 : 1, y: 0 }}
+          transition={{ duration: 0.3 }}
         >
           <div className="relative">
             <AnimatePresence mode="wait">
@@ -105,7 +169,8 @@ const Reviews = () => {
             <div className="flex justify-between mt-6">
               <button 
                 onClick={prev} 
-                className="px-4 py-2 bg-[#CBA135] text-white rounded-full font-semibold hover:bg-[#4ECDC4] transition"
+                disabled={refreshing}
+                className="px-4 py-2 bg-[#CBA135] text-white rounded-full font-semibold hover:bg-[#4ECDC4] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Prev
               </button>
@@ -113,8 +178,9 @@ const Reviews = () => {
                 {idx + 1} of {reviews.length}
               </span>
               <button 
-                onClick={next} 
-                className="px-4 py-2 bg-[#CBA135] text-white rounded-full font-semibold hover:bg-[#4ECDC4] transition"
+                onClick={next}
+                disabled={refreshing}
+                className="px-4 py-2 bg-[#CBA135] text-white rounded-full font-semibold hover:bg-[#4ECDC4] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -132,7 +198,8 @@ const Reviews = () => {
       >
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-8 py-3 bg-gradient-to-r from-[#CBA135] to-[#4ECDC4] hover:from-[#4ECDC4] hover:to-[#CBA135] text-white text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105"
+          disabled={refreshing}
+          className="px-8 py-3 bg-gradient-to-r from-[#CBA135] to-[#4ECDC4] hover:from-[#4ECDC4] hover:to-[#CBA135] text-white text-lg font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {showForm ? 'Cancel' : 'Write a Review'}
         </button>
@@ -142,10 +209,12 @@ const Reviews = () => {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
+            key="review-form"
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
           >
             <ReviewForm onReviewAdded={handleReviewAdded} />
           </motion.div>
@@ -155,4 +224,4 @@ const Reviews = () => {
   );
 };
 
-export default Reviews; 
+export default Reviews;
