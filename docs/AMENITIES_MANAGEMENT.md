@@ -232,3 +232,4 @@ Potential improvements for the amenities system:
 - Amenity location mapping
 - Amenity operating hours
 - Amenity pricing information
+

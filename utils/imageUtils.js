@@ -1,11 +1,19 @@
 // Image utility functions for Paradise Prelude
 // This file provides helper functions for managing images across the application
 
-import { imageCategories, getImagesByCategory, getImage, addImageToCategory } from '../config/images';
+import { 
+  imageCategories, 
+  getImagesByCategory, 
+  getImage, 
+  addImageToCategory,
+  getDiscoveredImagesCount,
+  galleryImages,
+  heroImages,
+} from '../config/images';
 
 /**
  * Get all images from a specific category
- * @param {string} category - The category name (hero, gallery, amenities, local)
+ * @param {string} category - The category name (hero, gallery, amenities, backgrounds, logo, local)
  * @returns {Array|Object} - Array of images or object with image keys
  */
 export const getCategoryImages = (category) => {
@@ -23,7 +31,7 @@ export const getImageByKey = (category, key) => {
 };
 
 /**
- * Add a new image to a category
+ * Add a new image to a category (runtime addition)
  * @param {string} category - The category name
  * @param {string} imageUrl - The image URL
  * @param {string} key - Optional key for object-based categories
@@ -53,8 +61,16 @@ export const getRandomImages = (category, count = 3) => {
  * @returns {Array} - Array of gallery image URLs
  */
 export const getGalleryPreview = (count = 3) => {
-  const galleryImages = getImagesByCategory('gallery');
+  // Use the galleryImages directly from config
   return galleryImages.slice(0, count);
+};
+
+/**
+ * Get all gallery images
+ * @returns {Array} - Array of all gallery image URLs
+ */
+export const getAllGalleryImages = () => {
+  return galleryImages;
 };
 
 /**
@@ -63,7 +79,15 @@ export const getGalleryPreview = (count = 3) => {
  * @returns {string} - Hero image URL
  */
 export const getHeroImage = (type = 'main') => {
-  return getImage('hero', type);
+  return getImage('hero', type) || heroImages.main;
+};
+
+/**
+ * Get background images
+ * @returns {Array} - Array of background image URLs
+ */
+export const getBackgroundImages = () => {
+  return getImagesByCategory('backgrounds');
 };
 
 /**
@@ -80,12 +104,16 @@ export const getAmenityImages = (amenityTypes = ['pool', 'spa', 'garden', 'beach
 };
 
 /**
- * Check if an image URL is local (starts with /assets)
+ * Check if an image URL is local (starts with /assets or is a Vite-processed URL)
  * @param {string} imageUrl - The image URL to check
  * @returns {boolean} - True if the image is local
  */
 export const isLocalImage = (imageUrl) => {
-  return imageUrl && imageUrl.startsWith('/assets');
+  if (!imageUrl) return false;
+  // Check for Vite-processed URLs (they start with /assets or are relative)
+  return imageUrl.startsWith('/assets') || 
+         imageUrl.startsWith('./assets') || 
+         !imageUrl.startsWith('http');
 };
 
 /**
@@ -96,7 +124,7 @@ export const isLocalImage = (imageUrl) => {
 export const getImageDimensions = (imageUrl) => {
   // This is a placeholder function - in a real app, you might want to
   // implement actual image dimension detection
-  if (imageUrl.includes('unsplash.com')) {
+  if (imageUrl && imageUrl.includes('unsplash.com')) {
     // Extract dimensions from Unsplash URLs if available
     const match = imageUrl.match(/w=(\d+)/);
     if (match) {
@@ -114,6 +142,13 @@ export const getImageDimensions = (imageUrl) => {
  * @returns {string} - Optimized image URL
  */
 export const getOptimizedImageUrl = (imageUrl, width, height = null) => {
+  if (!imageUrl) return imageUrl;
+  
+  // For local images, Vite handles optimization automatically
+  if (isLocalImage(imageUrl)) {
+    return imageUrl;
+  }
+  
   if (imageUrl.includes('unsplash.com')) {
     // For Unsplash images, add size parameters
     const baseUrl = imageUrl.split('?')[0];
@@ -130,6 +165,27 @@ export const getOptimizedImageUrl = (imageUrl, width, height = null) => {
   return imageUrl;
 };
 
+/**
+ * Get statistics about discovered images
+ * @returns {Object} - Object with image counts by category
+ */
+export const getImageStats = () => {
+  return getDiscoveredImagesCount();
+};
+
+/**
+ * Check if images are available in a category
+ * @param {string} category - The category name
+ * @returns {boolean} - True if images are available
+ */
+export const hasImages = (category) => {
+  const images = getImagesByCategory(category);
+  if (Array.isArray(images)) {
+    return images.length > 0;
+  }
+  return Object.keys(images).length > 0;
+};
+
 // Default export with all utility functions
 export default {
   getCategoryImages,
@@ -137,9 +193,13 @@ export default {
   addImage,
   getRandomImages,
   getGalleryPreview,
+  getAllGalleryImages,
   getHeroImage,
+  getBackgroundImages,
   getAmenityImages,
   isLocalImage,
   getImageDimensions,
   getOptimizedImageUrl,
+  getImageStats,
+  hasImages,
 };

@@ -1,202 +1,341 @@
-# Image Management System
+# Image Management System - Auto-Discovery Architecture
 
-This document explains how to manage images in the Paradise Prelude project.
+This document explains the automatic image discovery system for the Paradise Prelude project.
 
 ## Overview
 
-The project now uses a centralized image management system that makes it easy to:
-- Add new images to the project
-- Use the same images across different pages
-- Organize images by category
-- Manage both local and external images
+The project now uses an **automatic image discovery system** that:
+- ✅ **Automatically finds** all images in the `assets/images` folder structure
+- ✅ **Categorizes images** based on their folder location
+- ✅ **Automatically displays** new images in the Gallery page and Home page preview
+- ✅ **No manual configuration needed** - just add images to the correct folder!
 
-## File Structure
+## Architecture
+
+### Folder Structure
 
 ```
 assets/
-├── images/
-│   ├── gallery/          # Gallery images
-│   ├── hero/            # Hero/banner images
-│   ├── amenities/       # Amenity images
-│   ├── backgrounds/     # Background images
-│   └── logo/           # Logo and branding images
-config/
-└── images.js           # Centralized image configuration
-utils/
-└── imageUtils.js       # Image utility functions
+└── images/
+    ├── gallery/          # Gallery images (auto-appears in Gallery page & Home preview)
+    ├── hero/             # Hero/banner images (for main banner sections)
+    ├── backgrounds/      # Background images (for page backgrounds)
+    ├── amenities/        # Amenity images (for amenity cards)
+    └── logo/             # Logo and branding images
 ```
+
+### How It Works
+
+1. **Automatic Discovery**: The system uses Vite's `import.meta.glob` to automatically scan the `assets/images` folder structure
+2. **Categorization**: Images are automatically categorized based on their folder location
+3. **Auto-Registration**: New images are automatically registered and available throughout the application
+4. **Fallback Support**: If no local images are found, the system falls back to external URLs
 
 ## Adding New Images
 
-### 1. Adding Local Images
+### Quick Start: Adding Gallery Images
 
-1. **Place your image file** in the appropriate folder:
-   - `assets/images/gallery/` - for gallery images
-   - `assets/images/hero/` - for hero/banner images
-   - `assets/images/amenities/` - for amenity images
-   - `assets/images/backgrounds/` - for background images
-   - `assets/images/logo/` - for logo images
+**To add a new gallery image:**
 
-2. **Update the configuration** in `config/images.js`:
-   ```javascript
-   // For gallery images (array)
-   export const galleryImages = [
-     // existing images...
-     '/assets/images/gallery/your-new-image.jpg',
-   ];
-
-   // For hero images (object)
-   export const heroImages = {
-     main: 'https://images.unsplash.com/...',
-     secondary: '/assets/images/hero/your-hero-image.jpg',
-   };
-
-   // For amenity images (object)
-   export const amenityImages = {
-     pool: 'https://images.unsplash.com/...',
-     restaurant: '/assets/images/amenities/restaurant.jpg',
-   };
-
-   // For local images (object)
-   export const localImages = {
-     whatsapp: '/assets/images/gallery/whatsapp-image.jpg',
-     logo: '/assets/images/logo/logo.png',
-   };
+1. **Place your image** in `assets/images/gallery/`
+   ```
+   assets/images/gallery/my-new-image.jpg
    ```
 
-### 2. Adding External Images
+2. **That's it!** The image will automatically:
+   - ✅ Appear in the Gallery page (`/gallery`)
+   - ✅ Appear in the Home page gallery preview slider
+   - ✅ Be available throughout the application
 
-Simply add the URL to the appropriate array or object in `config/images.js`:
+**No code changes needed!** Just add the file and restart the dev server.
 
-```javascript
-export const galleryImages = [
-  'https://images.unsplash.com/photo-1234567890',
-  'https://your-external-image-url.com/image.jpg',
-];
+### Adding Other Image Types
+
+#### Hero Images
 ```
+assets/images/hero/sunset-view.jpg
+```
+- Automatically available as `heroImages.sunset-view` or `heroImages.hero-1`, etc.
+- First hero image becomes `heroImages.main` (used in Home page banner)
+
+#### Background Images
+```
+assets/images/backgrounds/page-background.jpg
+```
+- Available in `backgroundImages` array
+- Use with `getBackgroundImages()` utility function
+
+#### Amenity Images
+```
+assets/images/amenities/pool.jpg
+assets/images/amenities/spa.jpg
+```
+- Automatically matched by filename (e.g., `pool.jpg` → `amenityImages.pool`)
+- Available in `amenityImages` object
+
+#### Logo Images
+```
+assets/images/logo/main-logo.png
+```
+- First logo becomes `logoImages.main`
+- Additional logos available as `logoImages.logo-1`, etc.
+
+## Supported Image Formats
+
+The system automatically discovers images in these formats:
+- `.jpg` / `.jpeg`
+- `.png`
+- `.webp`
+- `.gif`
+- `.svg`
 
 ## Using Images in Components
 
-### Basic Usage
+### Gallery Images
 
 ```javascript
-import { galleryImages, heroImages } from '../config/images';
+import { galleryImages } from '../config/images';
 
-// Use in component
-<img src={heroImages.main} alt="Hero" />
+// All gallery images (automatically includes all images from assets/images/gallery/)
 {galleryImages.map((img, idx) => (
   <img key={idx} src={img} alt={`Gallery ${idx + 1}`} />
 ))}
 ```
 
+### Hero Images
+
+```javascript
+import { heroImages } from '../config/images';
+
+// Main hero image (first image from assets/images/hero/ or fallback)
+<img src={heroImages.main} alt="Hero" />
+```
+
 ### Using Utility Functions
 
 ```javascript
-import { getGalleryPreview, getHeroImage, getRandomImages } from '../utils/imageUtils';
+import { 
+  getAllGalleryImages, 
+  getGalleryPreview, 
+  getHeroImage,
+  getBackgroundImages 
+} from '../utils/imageUtils';
+
+// Get all gallery images
+const allImages = getAllGalleryImages();
 
 // Get first 3 gallery images for preview
 const previewImages = getGalleryPreview(3);
 
-// Get specific hero image
+// Get hero image
 const heroImage = getHeroImage('main');
 
-// Get random images
-const randomImages = getRandomImages('gallery', 5);
+// Get background images
+const backgrounds = getBackgroundImages();
 ```
 
-## Image Categories
+## Image Organization Best Practices
 
-### 1. Hero Images (`heroImages`)
-- **Type**: Object
-- **Usage**: Main banner/hero images
-- **Keys**: `main`, `secondary`, `tertiary`, etc.
+### 1. Naming Conventions
 
-### 2. Gallery Images (`galleryImages`)
-- **Type**: Array
-- **Usage**: Gallery page and preview sections
-- **Access**: By index
+**Recommended naming:**
+- Use lowercase letters
+- Use hyphens for word separation
+- Be descriptive
+- Examples:
+  - ✅ `villa-sunset-view.jpg`
+  - ✅ `pool-daytime.jpg`
+  - ✅ `restaurant-interior.jpg`
+  - ❌ `IMG_1234.jpg` (not descriptive)
+  - ❌ `My Image.png` (spaces and capitals)
 
-### 3. Amenity Images (`amenityImages`)
-- **Type**: Object
-- **Usage**: Amenity cards and features
-- **Keys**: `pool`, `spa`, `garden`, `beach`, etc.
+### 2. File Organization
 
-### 4. Local Images (`localImages`)
-- **Type**: Object
-- **Usage**: Project-specific images
-- **Keys**: `whatsapp`, `logo`, etc.
+**Gallery Images:**
+- Place all gallery images in `assets/images/gallery/`
+- No subfolders needed (but supported)
+- Images are sorted alphabetically
 
-## Best Practices
+**Hero Images:**
+- Place hero images in `assets/images/hero/`
+- First image becomes the main hero image
+- Additional images available by filename or index
 
-### 1. Image Naming
-- Use descriptive, lowercase names with hyphens
-- Example: `pool-view-sunset.jpg`, `restaurant-interior.jpg`
+**Background Images:**
+- Place background images in `assets/images/backgrounds/`
+- Use for page backgrounds, section backgrounds, etc.
 
-### 2. Image Optimization
-- Use appropriate file formats (JPEG for photos, PNG for graphics)
-- Optimize file sizes for web use
-- Consider using WebP format for better compression
+### 3. Image Optimization
 
-### 3. External Images
-- Use reliable image hosting services
-- Consider image dimensions and quality parameters
-- Use the `getOptimizedImageUrl` utility for external images
+**Before adding images:**
+- ✅ Optimize file sizes for web use
+- ✅ Use appropriate formats (JPEG for photos, PNG for graphics)
+- ✅ Consider using WebP for better compression
+- ✅ Recommended max file size: 500KB per image
+- ✅ Recommended dimensions: 1920x1080 for hero images, 1200x800 for gallery
 
-### 4. Responsive Images
-- Use the utility functions to get different image sizes
-- Consider using `srcset` for responsive images
+## Automatic Features
+
+### 1. Auto-Discovery
+- Images are automatically discovered on build/dev server start
+- No manual registration needed
+- Works with hot module replacement (HMR) in development
+
+### 2. Auto-Categorization
+- Images are automatically categorized by folder location
+- Gallery images → `galleryImages` array
+- Hero images → `heroImages` object
+- Background images → `backgroundImages` array
+- Amenity images → `amenityImages` object
+- Logo images → `logoImages` object
+
+### 3. Auto-Display
+- Gallery images automatically appear in:
+  - Gallery page (`/gallery`)
+  - Home page gallery preview slider
+- Hero images automatically available for banner sections
+- Background images available for background usage
+
+## Configuration File
+
+The main configuration is in `config/images.js`:
+
+```javascript
+// Auto-discovered images
+export const galleryImages = [
+  // All images from assets/images/gallery/ are automatically included
+  // Fallback external images only used if no local images found
+];
+
+export const heroImages = {
+  main: discoveredImages.hero[0] || fallbackUrl,
+  // Additional hero images...
+};
+```
 
 ## Utility Functions
 
-The `utils/imageUtils.js` file provides several helpful functions:
+Available in `utils/imageUtils.js`:
 
-- `getCategoryImages(category)` - Get all images from a category
-- `getImageByKey(category, key)` - Get specific image by key
-- `getRandomImages(category, count)` - Get random images
-- `getGalleryPreview(count)` - Get gallery preview images
-- `getHeroImage(type)` - Get hero image
-- `getAmenityImages(types)` - Get amenity images
-- `isLocalImage(url)` - Check if image is local
-- `getOptimizedImageUrl(url, width, height)` - Get optimized URL
+| Function | Description |
+|----------|-------------|
+| `getAllGalleryImages()` | Get all gallery images |
+| `getGalleryPreview(count)` | Get first N gallery images for preview |
+| `getHeroImage(type)` | Get specific hero image |
+| `getBackgroundImages()` | Get all background images |
+| `getImageStats()` | Get statistics about discovered images |
+| `hasImages(category)` | Check if category has images |
+| `isLocalImage(url)` | Check if image is local |
+
+## Troubleshooting
+
+### Images Not Appearing?
+
+1. **Check file location**: Ensure images are in the correct folder (`assets/images/gallery/`, etc.)
+2. **Check file format**: Ensure file extension is supported (`.jpg`, `.png`, `.webp`, etc.)
+3. **Restart dev server**: Auto-discovery happens on server start
+4. **Check console**: Look for any error messages in the browser console
+
+### Images Not Categorized Correctly?
+
+- Ensure images are in the correct folder:
+  - Gallery images → `assets/images/gallery/`
+  - Hero images → `assets/images/hero/`
+  - Background images → `assets/images/backgrounds/`
+  - Amenity images → `assets/images/amenities/`
+  - Logo images → `assets/images/logo/`
+
+### Fallback Images Showing?
+
+- If you see fallback external images, it means no local images were found
+- Add images to the appropriate folder and restart the dev server
+- Local images take priority over fallback images
 
 ## Examples
 
-### Adding a New Gallery Image
+### Example 1: Adding a New Gallery Image
 
-1. Save image as `assets/images/gallery/new-villa-view.jpg`
-2. Update `config/images.js`:
-   ```javascript
-   export const galleryImages = [
-     // existing images...
-     '/assets/images/gallery/new-villa-view.jpg',
-   ];
-   ```
-3. The image will automatically appear in both Home page preview and Gallery page
+1. Save image as `assets/images/gallery/villa-pool-view.jpg`
+2. Restart dev server (or wait for HMR)
+3. Image automatically appears in:
+   - Gallery page
+   - Home page gallery preview
 
-### Adding a New Hero Image
+### Example 2: Adding a New Hero Image
 
-1. Save image as `assets/images/hero/sunset-view.jpg`
-2. Update `config/images.js`:
-   ```javascript
-   export const heroImages = {
-     main: 'https://images.unsplash.com/...',
-     sunset: '/assets/images/hero/sunset-view.jpg',
-   };
-   ```
+1. Save image as `assets/images/hero/sunset-banner.jpg`
+2. Restart dev server
 3. Use in component:
    ```javascript
-   import { getHeroImage } from '../utils/imageUtils';
-   const sunsetImage = getHeroImage('sunset');
+   import { heroImages } from '../config/images';
+   <img src={heroImages['sunset-banner']} alt="Sunset" />
    ```
+
+### Example 3: Adding Multiple Gallery Images
+
+1. Add multiple images to `assets/images/gallery/`:
+   - `villa-exterior-1.jpg`
+   - `villa-exterior-2.jpg`
+   - `villa-interior-1.jpg`
+   - `villa-interior-2.jpg`
+2. All images automatically appear in Gallery and Home preview
+3. Images are sorted alphabetically
 
 ## Migration from Old System
 
-The old system used hardcoded image arrays in individual components. The new system:
+If you were using the old manual system:
 
-1. ✅ Centralizes all image management
-2. ✅ Makes images reusable across components
-3. ✅ Provides utility functions for easy access
-4. ✅ Organizes images by category
-5. ✅ Supports both local and external images
+1. **Old way** (manual):
+   ```javascript
+   export const galleryImages = [
+     '/assets/images/gallery/image1.jpg',
+     '/assets/images/gallery/image2.jpg',
+   ];
+   ```
 
-All existing functionality is preserved while adding these new capabilities.
+2. **New way** (automatic):
+   - Just place images in `assets/images/gallery/`
+   - They're automatically discovered!
+
+**No code changes needed** - the new system is backward compatible with existing code.
+
+## Advanced Usage
+
+### Getting Image Statistics
+
+```javascript
+import { getImageStats } from '../utils/imageUtils';
+
+const stats = getImageStats();
+console.log(stats);
+// {
+//   gallery: 10,
+//   hero: 2,
+//   backgrounds: 5,
+//   amenities: 8,
+//   logo: 1,
+//   total: 26
+// }
+```
+
+### Checking if Images Exist
+
+```javascript
+import { hasImages } from '../utils/imageUtils';
+
+if (hasImages('gallery')) {
+  // Gallery images are available
+}
+```
+
+## Summary
+
+✅ **Just add images to the correct folder** → They automatically appear everywhere!
+
+✅ **No manual configuration** → The system handles everything automatically
+
+✅ **Works with existing code** → Backward compatible with current components
+
+✅ **Hot reload support** → Changes appear immediately in development
+
+The new auto-discovery system makes managing images effortless - just organize them in folders and they're automatically available throughout your application!

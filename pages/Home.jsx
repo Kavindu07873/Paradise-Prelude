@@ -11,6 +11,7 @@ import { heroImages, galleryImages } from '../config/images';
 import { getReviewsPreview } from '../config/reviews';
 import { getFeaturedAmenities, amenitiesAnimationVariants, getAmenitiesWithIcons } from '../config/amenities';
 import AmenityCard from '../components/AmenityCard';
+import EngagementStats from '../components/EngagementStats';
 
 const WHATSAPP_NUMBER = '1234567890';
 const DEFAULT_MESSAGE = encodeURIComponent("Hello Paradise Prelude! I'd like to inquire about availability.");
@@ -21,6 +22,9 @@ const Home = () => {
 
   return (
   <>
+    {/* Engagement Stats - View Count & Like Button */}
+    <EngagementStats />
+    
     {/* Hero Section */}
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       <motion.img
