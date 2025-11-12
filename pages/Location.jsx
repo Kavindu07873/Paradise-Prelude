@@ -9,18 +9,19 @@ const Location = () => (
     <motion.p className="text-lg mb-6 text-gray-200 text-center" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7 }}>
       Located a short distance from the exit of the southern expressway, Paradise Prelude is easily accessible from Colombo and just minutes away from Galle – the capital city of the southern province and a world heritage site. Our villa is also close to a variety of well-renowned travel destinations on the southern coast.
     </motion.p>
-    <motion.div className="rounded-lg overflow-hidden shadow-lg" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.7 }}>
-      <iframe
-        title="Paradise Prelude Location"
-        src="https://maps.app.goo.gl/RoB9GoqkcK3P4ybL9"
-        width="100%"
-        height="300"
-        style={{ border: 0 }}
-        allowFullScreen=""
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-      ></iframe>
-    </motion.div>
+      <motion.div className="rounded-lg overflow-hidden shadow-lg" initial={{opacity: 0, y: 30}}
+                  animate={{opacity: 1, y: 0}} transition={{delay: 0.4, duration: 0.7}}>
+          <iframe
+              title="Paradise Prelude Location"
+              src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3967.980708282847!2d80.295998!3d5.997385!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zNcKwNTknNTAuNiJOIDgwwrAxNyc0NS42IkU!5e0!3m2!1sen!2slk!4v1762926798602!5m2!1sen!2slk"
+              width="600"
+              height="450"
+              style="border:0;"
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade">
+          </iframe>
+      </motion.div>
   </motion.section>
 );
 
