@@ -2,7 +2,7 @@ import React from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
-const WHATSAPP_NUMBER = '1234567890';
+const WHATSAPP_NUMBER = '+94710178210';
 const DEFAULT_MESSAGE = encodeURIComponent("Hello Paradise Prelude! I'd like to inquire about availability.");
 
 const Contact = () => {

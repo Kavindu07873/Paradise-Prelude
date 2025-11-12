@@ -12,7 +12,7 @@ const Location = () => (
     <motion.div className="rounded-lg overflow-hidden shadow-lg" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.7 }}>
       <iframe
         title="Paradise Prelude Location"
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.019019145409!2d144.9630579153167!3d-37.81627977975171!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad65d43f1f7fd81%3A0xf577c6e0b0b0b0b0!2sMelbourne%20VIC%2C%20Australia!5e0!3m2!1sen!2sus!4v1680000000000!5m2!1sen!2sus"
+        src="https://maps.app.goo.gl/RoB9GoqkcK3P4ybL9"
         width="100%"
         height="300"
         style={{ border: 0 }}

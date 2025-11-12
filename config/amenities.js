@@ -21,14 +21,14 @@ import {
 
 // Main amenities data
 export const amenities = [
-  {
-    id: 1,
-    iconComponent: 'FaSwimmingPool',
-    title: 'Infinity Pool',
-    description: 'Swim with breathtaking ocean views.',
-    category: 'recreation',
-    featured: true,
-  },
+  // {
+  //   id: 1,
+  //   iconComponent: 'FaSwimmingPool',
+  //   title: 'Infinity Pool',
+  //   description: 'Swim with breathtaking ocean views.',
+  //   category: 'recreation',
+  //   featured: true,
+  // },
   {
     id: 2,
     iconComponent: 'FaLeaf',
@@ -37,22 +37,22 @@ export const amenities = [
     category: 'nature',
     featured: true,
   },
-  {
-    id: 3,
-    iconComponent: 'FaEye',
-    title: 'Ocean View',
-    description: 'Panoramic vistas from every room.',
-    category: 'view',
-    featured: true,
-  },
-  {
-    id: 4,
-    iconComponent: 'FaUtensils',
-    title: 'Chef-on-call',
-    description: 'Gourmet dining at your convenience.',
-    category: 'dining',
-    featured: true,
-  },
+  // {
+  //   id: 3,
+  //   iconComponent: 'FaEye',
+  //   title: 'Ocean View',
+  //   description: 'Panoramic vistas from every room.',
+  //   category: 'view',
+  //   featured: true,
+  // },
+  // {
+  //   id: 4,
+  //   iconComponent: 'FaUtensils',
+  //   title: 'Chef-on-call',
+  //   description: 'Gourmet dining at your convenience.',
+  //   category: 'dining',
+  //   featured: true,
+  // },
   {
     id: 5,
     iconComponent: 'FaWifi',
@@ -61,14 +61,14 @@ export const amenities = [
     category: 'comfort',
     featured: true,
   },
-  {
-    id: 6,
-    iconComponent: 'FaSpa',
-    title: 'Spa & Yoga Lounge',
-    description: 'Wellness and serenity await.',
-    category: 'wellness',
-    featured: true,
-  },
+  // {
+  //   id: 6,
+  //   iconComponent: 'FaSpa',
+  //   title: 'Spa & Yoga Lounge',
+  //   description: 'Wellness and serenity await.',
+  //   category: 'wellness',
+  //   featured: true,
+  // },
   {
     id: 7,
     iconComponent: 'FaCar',
