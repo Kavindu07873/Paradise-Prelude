@@ -13,7 +13,7 @@ import { getFeaturedAmenities, amenitiesAnimationVariants, getAmenitiesWithIcons
 import AmenityCard from '../components/AmenityCard';
 import EngagementStats from '../components/EngagementStats';
 
-const WHATSAPP_NUMBER = '1234567890';
+const WHATSAPP_NUMBER = '+94710178210';
 const DEFAULT_MESSAGE = encodeURIComponent("Hello Paradise Prelude! I'd like to inquire about availability.");
 
 const Home = () => {
