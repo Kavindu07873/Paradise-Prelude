@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const faqs = [
   {
     q: 'Is breakfast included in the stay?',
-    a: 'Yes, a complimentary gourmet breakfast is included for all guests.'
+    a: 'No, but we can arrange them for  all guests.'
   },
   {
     q: 'Is the villa family-friendly?',

@@ -13,14 +13,14 @@ const Location = () => (
                   animate={{opacity: 1, y: 0}} transition={{delay: 0.4, duration: 0.7}}>
           <iframe
               title="Paradise Prelude Location"
-              src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3967.980708282847!2d80.295998!3d5.997385!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zNcKwNTknNTAuNiJOIDgwwrAxNyc0NS42IkU!5e0!3m2!1sen!2slk!4v1762926798602!5m2!1sen!2slk"
-              width="600"
-              height="450"
-              style="border:0;"
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d592.4623954026537!2d80.29657420565898!3d5.997312506266524!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2slk!4v1762927138066!5m2!1sen!2slk"
+              width="100%"
+              height="300"
+              style={{border: 0}}
               allowFullScreen=""
               loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade">
-          </iframe>
+              referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
       </motion.div>
   </motion.section>
 );
